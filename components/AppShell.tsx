@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import StoreSwitcher from './StoreSwitcher';
 import NotificationBell from './NotificationBell';
 import SignOutButton from './SignOutButton';
@@ -43,6 +43,7 @@ export default function AppShell({
           </Suspense>
 
           <div className="flex items-center gap-3">
+            <RefreshButton />
             <NotificationBell userId={profile.id} initialMuted={profile.notifications_muted} />
             <div className="hidden sm:block text-right leading-tight">
               <p className="text-sm font-medium text-ink">{profile.full_name}</p>
@@ -63,6 +64,45 @@ export default function AppShell({
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">{children}</main>
     </div>
+  );
+}
+
+function RefreshButton() {
+  const [spinning, setSpinning] = useState(false);
+
+  function handleRefresh() {
+    setSpinning(true);
+    // A full reload, not just a data refresh — this guarantees you're
+    // seeing the latest data AND the latest version of the app itself,
+    // which matters right after an update has been pushed.
+    window.location.reload();
+  }
+
+  return (
+    <button
+      onClick={handleRefresh}
+      aria-label="Refresh"
+      title="Refresh"
+      className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-ink/5 transition-colors"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className={spinning ? 'animate-spin' : ''}
+      >
+        <path d="M23 4v6h-6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
   );
 }
 
