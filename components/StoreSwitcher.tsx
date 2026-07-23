@@ -41,6 +41,7 @@ export default function StoreSwitcher({
     const params = new URLSearchParams(searchParams.toString());
     params.set('store', newStoreId);
     router.push(`${pathname}?${params.toString()}`);
+    router.refresh();
 
     // Remember this as the user's default store for next time they log in.
     // This runs in the background — it doesn't block the dropdown from

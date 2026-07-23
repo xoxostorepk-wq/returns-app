@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import RequestsBrowser from '@/components/RequestsBrowser';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function RequestsPage({
   searchParams,
 }: {
