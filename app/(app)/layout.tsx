@@ -15,18 +15,15 @@ export default async function AuthenticatedLayout({
 
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const [{ data: profile }, { data: stores }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('stores').select('*').order('name'),
+  ]);
 
   if (!profile) {
     // Auth user exists but no profile row yet — Admin needs to finish setup.
     redirect('/login');
   }
-
-  const { data: stores } = await supabase.from('stores').select('*').order('name');
 
   return (
     <AppShell profile={profile} stores={stores ?? []}>

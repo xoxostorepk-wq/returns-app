@@ -9,8 +9,10 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user!.id).single();
-  const { data: request } = await supabase.from('requests').select('*').eq('id', params.id).single();
+  const [{ data: profile }, { data: request }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user!.id).single(),
+    supabase.from('requests').select('*').eq('id', params.id).single(),
+  ]);
 
   if (!request) notFound();
 

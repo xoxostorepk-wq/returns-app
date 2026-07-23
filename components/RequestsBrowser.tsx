@@ -32,6 +32,8 @@ export default function RequestsBrowser({
     currentProfile.role === 'order_taker' ? 'pending' : 'all'
   );
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Keep the list live: new requests / status changes appear without a refresh.
@@ -67,9 +69,19 @@ export default function RequestsBrowser({
           return false;
         }
       }
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (new Date(r.created_at) < from) return false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        if (new Date(r.created_at) > to) return false;
+      }
       return true;
     });
-  }, [requests, statusFilter, search]);
+  }, [requests, statusFilter, search, dateFrom, dateTo]);
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -113,6 +125,34 @@ export default function RequestsBrowser({
           placeholder="Search order number or item…"
           className="ml-auto min-w-[200px] rounded-lg border border-line px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
+      </div>
+
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <label className="text-sm text-ink/60">From</label>
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="rounded-lg border border-line px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+        <label className="text-sm text-ink/60">To</label>
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="rounded-lg border border-line px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        />
+        {(dateFrom || dateTo) && (
+          <button
+            onClick={() => {
+              setDateFrom('');
+              setDateTo('');
+            }}
+            className="text-sm text-ink/50 hover:text-ink underline"
+          >
+            Clear dates
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (

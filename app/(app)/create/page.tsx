@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { RequestType } from '@/lib/types';
@@ -13,7 +13,55 @@ export default function CreateRequestPage() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const storeId = searchParams.get('store') ?? '';
+  // Prefer the store in the URL (set by the store switcher / nav links).
+  // If it's ever missing — e.g. an old bookmark, or a link that didn't carry
+  // it along — fall back to the user's last-used store instead of failing
+  // or guessing wrong.
+  const [storeId, setStoreId] = useState(searchParams.get('store') ?? '');
+  const [storeName, setStoreName] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function resolveStore() {
+      const urlStoreId = searchParams.get('store');
+
+      if (urlStoreId) {
+        setStoreId(urlStoreId);
+        const { data } = await supabase.from('stores').select('name').eq('id', urlStoreId).single();
+        if (!cancelled && data) setStoreName(data.name);
+        return;
+      }
+
+      // No store in the URL — look up the signed-in user's last-used store.
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('last_store_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!cancelled && profile?.last_store_id) {
+        setStoreId(profile.last_store_id);
+        const { data: store } = await supabase
+          .from('stores')
+          .select('name')
+          .eq('id', profile.last_store_id)
+          .single();
+        if (!cancelled && store) setStoreName(store.name);
+      }
+    }
+
+    resolveStore();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const [orderNumber, setOrderNumber] = useState('');
   const [requestType, setRequestType] = useState<RequestType>('exchange');
@@ -135,9 +183,14 @@ export default function CreateRequestPage() {
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-xl font-semibold text-ink mb-1">New request</h1>
-      <p className="text-sm text-ink/60 mb-6">
+      <p className="text-sm text-ink/60 mb-3">
         Fill this in from what the customer sent — the Order Taker will pick it up from here.
       </p>
+      {storeName && (
+        <p className="text-sm font-medium text-primary bg-primary/10 rounded-lg px-3 py-2 mb-6 inline-block">
+          Creating for: {storeName}
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5 pb-28 sm:pb-6">
         <Field label="Order number">

@@ -34,11 +34,13 @@ export default function AppShell({
             </Suspense>
           </div>
 
-          <nav className="hidden sm:flex items-center gap-1 text-sm font-medium">
-            <NavLink href="/requests" label="Requests" />
-            {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
-            {profile.role === 'admin' && <NavLink href="/admin/users" label="Users" />}
-          </nav>
+          <Suspense fallback={null}>
+            <nav className="hidden sm:flex items-center gap-1 text-sm font-medium">
+              <NavLink href="/requests" label="Requests" />
+              {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
+              {profile.role === 'admin' && <NavLink href="/admin/users" label="Users" />}
+            </nav>
+          </Suspense>
 
           <div className="flex items-center gap-3">
             <NotificationBell userId={profile.id} initialMuted={profile.notifications_muted} />
@@ -50,11 +52,13 @@ export default function AppShell({
           </div>
         </div>
 
-        <nav className="sm:hidden flex items-center gap-1 px-4 pb-2 text-sm font-medium overflow-x-auto">
-          <NavLink href="/requests" label="Requests" />
-          {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
-          {profile.role === 'admin' && <NavLink href="/admin/users" label="Users" />}
-        </nav>
+        <Suspense fallback={null}>
+          <nav className="sm:hidden flex items-center gap-1 px-4 pb-2 text-sm font-medium overflow-x-auto">
+            <NavLink href="/requests" label="Requests" />
+            {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
+            {profile.role === 'admin' && <NavLink href="/admin/users" label="Users" />}
+          </nav>
+        </Suspense>
       </header>
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">{children}</main>
@@ -64,10 +68,17 @@ export default function AppShell({
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const active = pathname.startsWith(href);
+
+  // Carry the currently selected store along to whichever page we navigate
+  // to, so switching pages never loses track of which store you're in.
+  const storeId = searchParams.get('store');
+  const destination = storeId ? `${href}?store=${storeId}` : href;
+
   return (
     <Link
-      href={href}
+      href={destination}
       className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
         active ? 'bg-primary/10 text-primary' : 'text-ink/60 hover:text-ink hover:bg-ink/5'
       }`}
