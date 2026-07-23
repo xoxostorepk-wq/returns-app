@@ -32,8 +32,13 @@ export default function RequestsBrowser({
     currentProfile.role === 'order_taker' ? 'pending' : 'all'
   );
   const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // Defaults to the current month (e.g. "2026-07") so the list starts
+  // useful without anyone having to set a filter first.
+  const [month, setMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [showAllMonths, setShowAllMonths] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Keep the list live: new requests / status changes appear without a refresh.
@@ -69,19 +74,14 @@ export default function RequestsBrowser({
           return false;
         }
       }
-      if (dateFrom) {
-        const from = new Date(dateFrom);
-        from.setHours(0, 0, 0, 0);
-        if (new Date(r.created_at) < from) return false;
-      }
-      if (dateTo) {
-        const to = new Date(dateTo);
-        to.setHours(23, 59, 59, 999);
-        if (new Date(r.created_at) > to) return false;
+      if (!showAllMonths) {
+        const [year, monthNum] = month.split('-').map(Number);
+        const createdAt = new Date(r.created_at);
+        if (createdAt.getFullYear() !== year || createdAt.getMonth() + 1 !== monthNum) return false;
       }
       return true;
     });
-  }, [requests, statusFilter, search, dateFrom, dateTo]);
+  }, [requests, statusFilter, search, month, showAllMonths]);
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -128,31 +128,27 @@ export default function RequestsBrowser({
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <label className="text-sm text-ink/60">From</label>
+        <label className="text-sm text-ink/60">Month</label>
         <input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="rounded-lg border border-line px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          type="month"
+          value={month}
+          onChange={(e) => {
+            setMonth(e.target.value);
+            setShowAllMonths(false);
+          }}
+          disabled={showAllMonths}
+          className="rounded-lg border border-line px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
         />
-        <label className="text-sm text-ink/60">To</label>
-        <input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="rounded-lg border border-line px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
-        {(dateFrom || dateTo) && (
-          <button
-            onClick={() => {
-              setDateFrom('');
-              setDateTo('');
-            }}
-            className="text-sm text-ink/50 hover:text-ink underline"
-          >
-            Clear dates
-          </button>
-        )}
+        <button
+          onClick={() => setShowAllMonths((v) => !v)}
+          className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+            showAllMonths
+              ? 'bg-primary text-white border-primary'
+              : 'border-line text-ink/60 hover:text-ink'
+          }`}
+        >
+          All time
+        </button>
       </div>
 
       {filtered.length === 0 ? (
