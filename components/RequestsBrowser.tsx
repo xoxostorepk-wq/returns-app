@@ -65,9 +65,10 @@ export default function RequestsBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
-  const filtered = useMemo(() => {
+  // Same as `filtered`, but ignoring the status tab — used to show a count
+  // next to each tab (e.g. "Pending (3)") for the currently selected month.
+  const withinTimeframe = useMemo(() => {
     return requests.filter((r) => {
-      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (search.trim()) {
         const q = search.trim().toLowerCase();
         if (!r.order_number.toLowerCase().includes(q) && !r.item_to_send.toLowerCase().includes(q)) {
@@ -81,7 +82,23 @@ export default function RequestsBrowser({
       }
       return true;
     });
-  }, [requests, statusFilter, search, month, showAllMonths]);
+  }, [requests, search, month, showAllMonths]);
+
+  const counts = useMemo(() => {
+    const result: Record<RequestStatus | 'all', number> = {
+      all: withinTimeframe.length,
+      pending: 0,
+      packed: 0,
+      processed: 0,
+      cancelled: 0,
+    };
+    for (const r of withinTimeframe) result[r.status]++;
+    return result;
+  }, [withinTimeframe]);
+
+  const filtered = useMemo(() => {
+    return withinTimeframe.filter((r) => statusFilter === 'all' || r.status === statusFilter);
+  }, [withinTimeframe, statusFilter]);
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -116,7 +133,7 @@ export default function RequestsBrowser({
                 : 'bg-card border border-line text-ink/60 hover:text-ink'
             }`}
           >
-            {tab.label}
+            {tab.label} <span className="opacity-70">({counts[tab.key]})</span>
           </button>
         ))}
         <input
