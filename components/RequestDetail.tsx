@@ -171,11 +171,12 @@ export default function RequestDetail({
     });
 
     // Close the loop: let CS know it's done.
+    const processedMessage = `Order ${request.order_number} has been processed and handed to courier.`;
     await supabase.from('notifications').insert({
       recipient_id: request.created_by,
       request_id: request.id,
       type: 'new_request',
-      message: `Order ${request.order_number} has been processed and handed to courier.`,
+      message: processedMessage,
     });
 
     setBusy(false);
@@ -208,12 +209,13 @@ export default function RequestDetail({
       .in('role', ['order_taker', 'admin']);
 
     if (recipients) {
+      const reminderMessage = `Reminder: order ${request.order_number} is still ${request.status}.`;
       await supabase.from('notifications').insert(
         recipients.map((r) => ({
           recipient_id: r.id,
           request_id: request.id,
           type: 'manual_reminder',
-          message: `Reminder: order ${request.order_number} is still ${request.status}.`,
+          message: reminderMessage,
         }))
       );
     }

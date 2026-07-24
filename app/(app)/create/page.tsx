@@ -167,11 +167,12 @@ export default function CreateRequestPage() {
       .in('role', ['order_taker', 'admin']);
 
     if (recipients) {
+      const message = `New ${REQUEST_TYPE_LABELS[requestType]} request for order ${orderNumber.trim()}`;
       const notifs = recipients.map((r) => ({
         recipient_id: r.id,
         request_id: request.id,
         type: 'new_request',
-        message: `New ${REQUEST_TYPE_LABELS[requestType]} request for order ${orderNumber.trim()}`,
+        message,
       }));
       await supabase.from('notifications').insert(notifs);
     }

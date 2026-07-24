@@ -96,17 +96,19 @@ export default function NotificationBell({
 
       {open && (
         <div className="absolute right-0 mt-2 w-80 bg-card border border-line rounded-xl shadow-lg z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-line">
-            <span className="text-sm font-semibold text-ink">Notifications</span>
-            <div className="flex items-center gap-3">
-              <button onClick={toggleMute} className="text-xs text-ink/60 hover:text-ink">
-                {muted ? 'Unmute' : 'Mute'}
-              </button>
-              {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-xs text-primary hover:text-primary-dark">
-                  Mark all read
+          <div className="px-4 py-3 border-b border-line">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-ink">Notifications</span>
+              <div className="flex items-center gap-3">
+                <button onClick={toggleMute} className="text-xs text-ink/60 hover:text-ink">
+                  {muted ? 'Unmute' : 'Mute'}
                 </button>
-              )}
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="text-xs text-primary hover:text-primary-dark">
+                    Mark all read
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

@@ -72,6 +72,41 @@ export interface NotificationRecord {
   created_at: string;
 }
 
+export interface OrderConfirmation {
+  id: string;
+  store_id: string;
+  order_number: string;
+  shopify_created: boolean;
+  created_by: string;
+  created_at: string;
+}
+
+export interface OrderConfirmationComment {
+  id: string;
+  order_confirmation_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+}
+
+export interface ReturnedByCourier {
+  id: string;
+  store_id: string;
+  order_number: string;
+  courier: string;
+  resent: boolean;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ReturnedByCourierComment {
+  id: string;
+  returned_by_courier_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+}
+
 export const REQUEST_TYPE_LABELS: Record<RequestType, string> = {
   exchange: 'Exchange',
   replacement: 'Replacement',

@@ -38,6 +38,8 @@ export default function AppShell({
             <nav className="hidden sm:flex items-center gap-1 text-sm font-medium">
               <NavLink href="/requests" label="Requests" />
               {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
+              <NavLink href="/confirmations" label="Confirmations" />
+              <NavLink href="/returned-by-courier" label="Returned by Courier" />
               {profile.role === 'admin' && <NavLink href="/admin/users" label="Users" />}
             </nav>
           </Suspense>
@@ -57,6 +59,8 @@ export default function AppShell({
           <nav className="sm:hidden flex items-center gap-1 px-4 pb-2 text-sm font-medium overflow-x-auto">
             <NavLink href="/requests" label="Requests" />
             {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
+            <NavLink href="/confirmations" label="Confirmations" />
+            <NavLink href="/returned-by-courier" label="Returned by Courier" />
             {profile.role === 'admin' && <NavLink href="/admin/users" label="Users" />}
           </nav>
         </Suspense>
