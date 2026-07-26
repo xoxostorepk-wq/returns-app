@@ -56,6 +56,7 @@ export default async function ReturnedByCourierPage({
         doneField="resent"
         doneLabel="Resent"
         extraField={{ key: 'courier', label: 'Courier', placeholder: 'e.g. TCS, Leopard' }}
+        notesField={{ key: 'notes', label: 'Notes', placeholder: 'Any extra notes (optional)' }}
         showAmount
         placeholder="#153"
       />

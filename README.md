@@ -154,6 +154,22 @@ on your own computer.
    else defaults to Requests, Confirmations, and Returned by Courier
    (you can adjust this per person afterward from the Users page).
 
+## What's new — optional Courier & Notes fields
+
+- **Confirmations** now has an optional **Courier** field and an
+  optional **Notes** field.
+- **Returned by Courier** (which already had Courier) now also has an
+  optional **Notes** field.
+- Notes can be filled in when creating an entry, and edited afterward
+  by whoever is currently allowed to update that row (Order Taker /
+  Admin, or CS only up until it's created — same fulfilled-lock rule as
+  everywhere else). A small note icon shows next to an entry once it has
+  notes, so you can spot it without opening it.
+
+Run `supabase/add_courier_and_notes_fields.sql` in the SQL Editor before
+using this — it just adds the two new (nullable) columns, nothing
+destructive.
+
 ## Deliberately left out of Version 1 (for later)
 
 - Shopify integration (all data is entered manually for now)

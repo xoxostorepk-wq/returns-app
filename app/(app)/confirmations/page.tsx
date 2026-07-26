@@ -55,6 +55,8 @@ export default async function ConfirmationsPage({
         parentIdField="order_confirmation_id"
         doneField="shopify_created"
         doneLabel="Order created in Shopify"
+        extraField={{ key: 'courier', label: 'Courier', placeholder: 'e.g. TCS, Leopard (optional)' }}
+        notesField={{ key: 'notes', label: 'Notes', placeholder: 'Any extra notes (optional)' }}
         showAmount
         placeholder="#1535"
       />

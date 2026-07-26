@@ -31,6 +31,7 @@ export default function SimpleTicketBrowser({
   doneField,
   doneLabel,
   extraField,
+  notesField,
   showAmount,
   placeholder,
 }: {
@@ -44,6 +45,7 @@ export default function SimpleTicketBrowser({
   doneField: string;
   doneLabel: string;
   extraField?: { key: string; label: string; placeholder: string };
+  notesField?: { key: string; label: string; placeholder: string };
   showAmount?: boolean;
   placeholder: string;
 }) {
@@ -56,8 +58,14 @@ export default function SimpleTicketBrowser({
 
   const [orderNumber, setOrderNumber] = useState('');
   const [extraValue, setExtraValue] = useState('');
+  const [notesValue, setNotesValue] = useState('');
   const [amountValue, setAmountValue] = useState('');
   const [creating, setCreating] = useState(false);
+
+  // Editing an existing item's notes after creation.
+  const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [notesDraft, setNotesDraft] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   useEffect(() => {
     const channel = supabase
@@ -101,12 +109,14 @@ export default function SimpleTicketBrowser({
       created_by: user.id,
     };
     if (extraField) row[extraField.key] = extraValue.trim();
+    if (notesField) row[notesField.key] = notesValue.trim() || null;
     if (showAmount) row.amount = amountValue.trim() ? Number(amountValue) : null;
 
     await supabase.from(table).insert(row);
 
     setOrderNumber('');
     setExtraValue('');
+    setNotesValue('');
     setAmountValue('');
     setCreating(false);
   }
@@ -144,6 +154,22 @@ export default function SimpleTicketBrowser({
       setComments((prev) => ({ ...prev, [id]: [...(prev[id] ?? []), data as CommentItem] }));
     }
     setNewComment('');
+  }
+
+  function startEditingNotes(item: TicketItem) {
+    if (!notesField) return;
+    setEditingNotesId(item.id);
+    setNotesDraft(item[notesField.key] ?? '');
+  }
+
+  async function handleSaveNotes(id: string) {
+    if (!notesField) return;
+    setSavingNotes(true);
+    const value = notesDraft.trim() || null;
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, [notesField.key]: value } : i)));
+    await supabase.from(table).update({ [notesField.key]: value }).eq('id', id);
+    setSavingNotes(false);
+    setEditingNotesId(null);
   }
 
   async function toggleDone(id: string, current: boolean) {
@@ -225,6 +251,17 @@ export default function SimpleTicketBrowser({
               />
             </div>
           )}
+          {notesField && (
+            <div className="flex-1 min-w-[180px] basis-full">
+              <label className="block text-xs font-medium text-ink/60 mb-1">{notesField.label}</label>
+              <input
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+                placeholder={notesField.placeholder}
+                className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          )}
           <button
             type="submit"
             disabled={creating}
@@ -276,6 +313,7 @@ export default function SimpleTicketBrowser({
                     {showAmount && item.amount != null && (
                       <span className="text-sm text-ink/60 font-mono shrink-0">{item.amount}</span>
                     )}
+                    {notesField && item[notesField.key] && <NoteIcon />}
                     <span className={`text-xs shrink-0 ${actual ? 'text-status-processed' : 'text-status-pending'}`}>
                       {actual ? doneLabel : 'Pending'}
                     </span>
@@ -295,6 +333,49 @@ export default function SimpleTicketBrowser({
 
                 {expanded === item.id && (
                   <div className="px-4 pb-4">
+                    {notesField && (
+                      <div className="mb-3 pb-3 border-b border-line">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-ink/50">{notesField.label}</p>
+                          {editingNotesId !== item.id && canToggle(actual) && (
+                            <button
+                              onClick={() => startEditingNotes(item)}
+                              className="text-xs text-primary hover:text-primary-dark"
+                            >
+                              {item[notesField.key] ? 'Edit' : 'Add'}
+                            </button>
+                          )}
+                        </div>
+                        {editingNotesId === item.id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={notesDraft}
+                              onChange={(e) => setNotesDraft(e.target.value)}
+                              placeholder={notesField.placeholder}
+                              rows={2}
+                              className="w-full rounded-lg border border-line px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleSaveNotes(item.id)}
+                                disabled={savingNotes}
+                                className="text-xs font-medium bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary-dark disabled:opacity-60"
+                              >
+                                {savingNotes ? 'Saving…' : 'Save'}
+                              </button>
+                              <button
+                                onClick={() => setEditingNotesId(null)}
+                                className="text-xs text-ink/60 px-2"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-ink/70">{item[notesField.key] || '—'}</p>
+                        )}
+                      </div>
+                    )}
                     <div className="space-y-2 mb-3">
                       {(comments[item.id] ?? []).length === 0 ? (
                         <p className="text-sm text-ink/50">No comments yet.</p>
@@ -333,6 +414,25 @@ export default function SimpleTicketBrowser({
         </div>
       )}
     </div>
+  );
+}
+
+function NoteIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="text-ink/30 shrink-0"
+      aria-label="Has notes"
+    >
+      <path d="M5 4h11l3 3v13H5z" strokeLinejoin="round" />
+      <path d="M16 4v3h3" strokeLinejoin="round" />
+      <path d="M8 12h8M8 16h5" strokeLinecap="round" />
+    </svg>
   );
 }
 

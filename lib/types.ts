@@ -121,6 +121,8 @@ export interface OrderConfirmation {
   order_number: string;
   shopify_created: boolean;
   amount: number | null;
+  courier: string | null;
+  notes: string | null;
   created_by: string;
   created_at: string;
 }
@@ -140,6 +142,7 @@ export interface ReturnedByCourier {
   courier: string;
   resent: boolean;
   amount: number | null;
+  notes: string | null;
   created_by: string;
   created_at: string;
 }
