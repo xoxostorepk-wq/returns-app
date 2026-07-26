@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import RequestDetail from '@/components/RequestDetail';
+import { hasTabAccess, firstAccessibleTabPath } from '@/lib/types';
 
 export default async function RequestDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -13,6 +14,11 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
     supabase.from('profiles').select('*').eq('id', user!.id).single(),
     supabase.from('requests').select('*').eq('id', params.id).single(),
   ]);
+
+  if (!profile) redirect('/login');
+  if (!hasTabAccess(profile, 'requests')) {
+    redirect(firstAccessibleTabPath(profile) ?? '/login');
+  }
 
   if (!request) notFound();
 

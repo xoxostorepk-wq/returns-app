@@ -96,6 +96,14 @@ export default function RequestsBrowser({
     return result;
   }, [withinTimeframe]);
 
+  const amountSums = useMemo(() => {
+    const result: Record<RequestStatus, number> = { pending: 0, packed: 0, processed: 0, cancelled: 0 };
+    for (const r of withinTimeframe) {
+      if (r.amount != null) result[r.status] += r.amount;
+    }
+    return result;
+  }, [withinTimeframe]);
+
   const filtered = useMemo(() => {
     return withinTimeframe.filter((r) => statusFilter === 'all' || r.status === statusFilter);
   }, [withinTimeframe, statusFilter]);
@@ -132,6 +140,13 @@ export default function RequestsBrowser({
           +
         </Link>
       )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <StatCard label="Pending" value={counts.pending} amount={amountSums.pending} tone="pending" icon={<ClockIcon />} />
+        <StatCard label="Packed" value={counts.packed} amount={amountSums.packed} tone="packed" icon={<PackageIcon />} />
+        <StatCard label="Processed" value={counts.processed} amount={amountSums.processed} tone="processed" icon={<CheckIcon />} />
+        <StatCard label="Cancelled" value={counts.cancelled} amount={amountSums.cancelled} tone="cancelled" icon={<XIcon />} />
+      </div>
 
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
         {STATUS_TABS.map((tab) => (
@@ -224,5 +239,75 @@ export default function RequestsBrowser({
         </div>
       )}
     </div>
+  );
+}
+
+const STAT_TONES: Record<RequestStatus, { bg: string; text: string }> = {
+  pending: { bg: 'bg-status-pending-bg', text: 'text-status-pending' },
+  packed: { bg: 'bg-status-packed-bg', text: 'text-status-packed' },
+  processed: { bg: 'bg-status-processed-bg', text: 'text-status-processed' },
+  cancelled: { bg: 'bg-status-cancelled-bg', text: 'text-status-cancelled' },
+};
+
+function StatCard({
+  label,
+  value,
+  amount,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: number;
+  amount: number;
+  tone: RequestStatus;
+  icon: React.ReactNode;
+}) {
+  const { bg, text } = STAT_TONES[tone];
+  return (
+    <div className="bg-card border border-line rounded-xl p-4 flex items-start justify-between">
+      <div>
+        <p className="text-2xl font-semibold text-ink leading-none">{value}</p>
+        <p className="text-xs text-ink/50 mt-1.5">{label}</p>
+        {amount > 0 && <p className="text-xs font-mono text-ink/40 mt-1">Rs {amount.toLocaleString()}</p>}
+      </div>
+      <span className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${bg} ${text}`}>{icon}</span>
+    </div>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PackageIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 8l-9-5-9 5 9 5 9-5z" strokeLinejoin="round" />
+      <path d="M3 8v8l9 5 9-5V8" strokeLinejoin="round" />
+      <path d="M12 13v8" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5l2.2 2.2L15.5 9.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5l5 5M14.5 9.5l-5 5" strokeLinecap="round" />
+    </svg>
   );
 }

@@ -158,7 +158,21 @@ export default function SimpleTicketBrowser({
 
   const [pending, setPending] = useState<Record<string, boolean>>({});
 
+  // CS can create and comment, but never mark something fulfilled. Order
+  // Taker can mark it fulfilled, but once it's fulfilled only Admin can
+  // undo it back to pending — this mirrors the DB-level lock in
+  // supabase/add_tab_access_and_permission_locks.sql.
+  const isAdmin = currentProfile.role === 'admin';
+  const isOrderTaker = currentProfile.role === 'order_taker';
+
+  function canToggle(actual: boolean) {
+    if (isAdmin) return true;
+    if (isOrderTaker) return !actual;
+    return false;
+  }
+
   function handleCheckboxClick(id: string, actual: boolean) {
+    if (!canToggle(actual)) return;
     setPending((prev) => {
       const next = { ...prev };
       const currentlyPending = id in next ? next[id] : actual;
@@ -231,6 +245,7 @@ export default function SimpleTicketBrowser({
             const actual = !!item[doneField];
             const isArmed = item.id in pending;
             const displayedChecked = isArmed ? pending[item.id] : actual;
+            const locked = !canToggle(actual);
 
             return (
               <div key={item.id} className="border-b border-line last:border-0">
@@ -238,9 +253,18 @@ export default function SimpleTicketBrowser({
                   <input
                     type="checkbox"
                     checked={displayedChecked}
+                    disabled={locked}
                     onChange={() => handleCheckboxClick(item.id, actual)}
-                    className="h-4 w-4 shrink-0"
+                    title={
+                      locked && actual
+                        ? 'Locked — only Admin can undo this'
+                        : locked
+                        ? 'Only Order Taker / Admin can mark this'
+                        : undefined
+                    }
+                    className="h-4 w-4 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                   />
+                  {locked && actual && <LockIcon />}
                   <button
                     onClick={() => toggleExpand(item.id)}
                     className="flex items-center gap-3 flex-1 text-left min-w-0"
@@ -309,5 +333,22 @@ export default function SimpleTicketBrowser({
         </div>
       )}
     </div>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      className="text-ink/30 shrink-0"
+    >
+      <rect x="5" y="11" width="14" height="9" rx="1.5" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+    </svg>
   );
 }

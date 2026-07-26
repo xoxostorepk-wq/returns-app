@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import SimpleTicketBrowser from '@/components/SimpleTicketBrowser';
+import { hasTabAccess, firstAccessibleTabPath } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -20,6 +22,11 @@ export default async function ConfirmationsPage({
     supabase.from('stores').select('*').order('name'),
     supabase.from('profiles').select('*'),
   ]);
+
+  if (!profile) redirect('/login');
+  if (!hasTabAccess(profile, 'confirmations')) {
+    redirect(firstAccessibleTabPath(profile) ?? '/login');
+  }
 
   const storeId = searchParams.store ?? profile?.last_store_id ?? stores?.[0]?.id;
 

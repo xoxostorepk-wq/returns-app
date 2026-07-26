@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { defaultTabsForRole } from '@/lib/types';
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     id: created.user.id,
     full_name,
     role,
+    tab_access: defaultTabsForRole(role),
   });
 
   if (profileError) {

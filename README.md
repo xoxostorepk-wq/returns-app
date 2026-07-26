@@ -112,6 +112,48 @@ on your own computer.
   next-working-day) reminders
 - Admin: user management, cancel requests (with reason), full access
 
+## What's new in this batch
+
+1. **Requests are locked after creation for CS.** Once a CS agent creates
+   a request, only Order Taker and Admin can edit it or change its status.
+   This is enforced both in the app and in the database (see the
+   migration below), so it holds even if someone bypasses the app.
+2. **Confirmations / Returned by Courier fulfilled-lock.** CS can create
+   entries and comment, but can't mark anything fulfilled. Order Taker can
+   mark something fulfilled, but once it's fulfilled, only Admin can
+   undo it back to pending (a small lock icon shows once something is
+   locked).
+3. **Print slips:** the Customer Copy now shows the store name
+   ("Xoxostore") instead of the CS agent's name under "Created by" — the
+   Company Copy still shows the real agent's name. Both copies now carry
+   a small branded header (logo + phone numbers + email).
+4. **Branding.** A built-in pink heart / "XOXO" script logo +
+   "XOXOSTORE.PK" wordmark now appears in the sidebar, the login page,
+   and on print slips, along with the phone numbers and email. This is a
+   custom-drawn logo (not your original file) — if you'd rather use your
+   actual logo image, drop a `logo.png` into the `public/` folder and
+   swap the `<Logo />` component's SVG for an `<img src="/logo.png" />` —
+   ask in the project chat and this can be done for you in a small
+   follow-up.
+5. **Per-user tab access.** Admin can now toggle, per user, which of the
+   4 tabs (Requests, Confirmations, Returned by Courier, Users) that
+   person sees — independent of their role. Role still controls what
+   they can *do* inside a tab; tab access just controls whether they see
+   it at all. Manage this from the **Users** page.
+6. **Redesigned navigation.** The top menu bar is now a left sidebar
+   (collapses to a slide-out drawer on phones), and the Requests page has
+   dashboard-style stat cards (Pending / Packed / Processed / Cancelled,
+   with amount totals) at the top instead of just the filter tabs.
+
+### Running the migration for this batch
+
+1. In Supabase, open **SQL Editor**.
+2. Open `supabase/add_tab_access_and_permission_locks.sql` from this
+   project, copy the whole thing, paste it in, and click **Run**.
+3. That's it — existing Admins automatically get all 4 tabs; everyone
+   else defaults to Requests, Confirmations, and Returned by Courier
+   (you can adjust this per person afterward from the Users page).
+
 ## Deliberately left out of Version 1 (for later)
 
 - Shopify integration (all data is entered manually for now)

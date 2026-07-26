@@ -23,10 +23,16 @@ module.exports = {
           cancelled: '#8A8A85',
           'cancelled-bg': '#EFEFED',
         },
+        brand: {
+          pink: '#E84E8A',
+          'pink-dark': '#C93A72',
+          'pink-bg': '#FDECF3',
+        },
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-plex-mono)', 'monospace'],
+        script: ['var(--font-script)', 'cursive'],
       },
     },
   },

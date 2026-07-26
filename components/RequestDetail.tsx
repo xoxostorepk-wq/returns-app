@@ -59,7 +59,10 @@ export default function RequestDetail({
   const [showCancel, setShowCancel] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const canEdit = currentProfile.role === 'cs' || currentProfile.role === 'admin';
+  // Once a CS agent creates a request, only Order Taker / Admin can edit it
+  // from here on — CS can still comment and upload photos, just not change
+  // the request fields.
+  const canEdit = currentProfile.role === 'order_taker' || currentProfile.role === 'admin';
   const canAct = currentProfile.role === 'order_taker' || currentProfile.role === 'admin';
   const isAdmin = currentProfile.role === 'admin';
 

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Logo from '@/components/Logo';
+import BrandContact from '@/components/BrandContact';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,10 +35,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-paper px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary text-white font-mono font-semibold text-lg mb-4">
-            R
-          </div>
+        <div className="mb-8 text-center flex flex-col items-center">
+          <Logo size="lg" className="mb-4" />
           <h1 className="text-xl font-semibold text-ink">Returns & Exchanges</h1>
           <p className="text-sm text-ink/60 mt-1">Sign in to continue</p>
         </div>
@@ -84,6 +84,7 @@ export default function LoginPage() {
         <p className="text-xs text-ink/50 text-center mt-6">
           No account yet? Ask your Admin to create one for you.
         </p>
+        <BrandContact className="text-[11px] text-center mt-4" />
       </div>
     </div>
   );
