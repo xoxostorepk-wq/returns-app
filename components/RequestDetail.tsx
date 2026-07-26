@@ -23,7 +23,6 @@ const EDITABLE_FIELDS: { key: keyof RequestRecord; label: string }[] = [
   { key: 'order_number', label: 'Order number' },
   { key: 'item_to_send', label: 'Item to send' },
   { key: 'payment_instructions', label: 'Payment instructions' },
-  { key: 'amount', label: 'Amount' },
 ];
 
 export default function RequestDetail({
@@ -49,7 +48,6 @@ export default function RequestDetail({
     order_number: request.order_number,
     item_to_send: request.item_to_send,
     payment_instructions: request.payment_instructions,
-    amount: request.amount != null ? String(request.amount) : '',
     request_type: request.request_type,
     request_type_other: request.request_type_other ?? '',
   });
@@ -88,7 +86,6 @@ export default function RequestDetail({
         order_number: form.order_number,
         item_to_send: form.item_to_send,
         payment_instructions: form.payment_instructions,
-        amount: form.amount.trim() ? Number(form.amount) : null,
         request_type: form.request_type,
         request_type_other: form.request_type === 'other' ? form.request_type_other : null,
       })
@@ -321,16 +318,6 @@ export default function RequestDetail({
                   className="input resize-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-ink/60 mb-1">Amount</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="input"
-                />
-              </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleSaveEdit}
@@ -352,7 +339,6 @@ export default function RequestDetail({
             <dl className="space-y-3 text-sm">
               <Row label="Item to send" value={request.item_to_send} />
               <Row label="Payment instructions" value={request.payment_instructions || '—'} />
-              <Row label="Amount" value={request.amount != null ? String(request.amount) : '—'} />
             </dl>
           )}
         </div>
@@ -361,8 +347,21 @@ export default function RequestDetail({
         <div className="bg-card border border-line rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-ink">Screenshots ({images.length})</h2>
-            <label className="text-sm text-primary hover:text-primary-dark cursor-pointer">
-              {busy ? 'Uploading…' : '+ Add photos'}
+            {busy && <span className="text-sm text-ink/50">Uploading…</span>}
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <label className="flex items-center justify-center gap-2 border border-line rounded-lg py-2 text-sm text-ink/70 cursor-pointer hover:border-primary/40 hover:text-primary transition-colors">
+              Take Photo
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => handleFileUpload(e.target.files)}
+              />
+            </label>
+            <label className="flex items-center justify-center gap-2 border border-line rounded-lg py-2 text-sm text-ink/70 cursor-pointer hover:border-primary/40 hover:text-primary transition-colors">
+              Choose from Library
               <input
                 type="file"
                 accept="image/*"

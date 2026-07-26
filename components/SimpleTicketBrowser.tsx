@@ -149,53 +149,77 @@ export default function SimpleTicketBrowser({
   async function toggleDone(id: string, current: boolean) {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, [doneField]: !current } : i)));
     await supabase.from(table).update({ [doneField]: !current }).eq('id', id);
+    setPending((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }
+
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+
+  function handleCheckboxClick(id: string, actual: boolean) {
+    setPending((prev) => {
+      const next = { ...prev };
+      const currentlyPending = id in next ? next[id] : actual;
+      const newlyArmed = !currentlyPending;
+      if (newlyArmed === actual) {
+        // Back to matching the real saved state — nothing to confirm.
+        delete next[id];
+      } else {
+        next[id] = newlyArmed;
+      }
+      return next;
+    });
   }
 
   return (
     <div>
-      <form onSubmit={handleCreate} className="bg-card border border-line rounded-xl p-4 mb-6 flex flex-wrap gap-2 items-end">
-        <div className="flex-1 min-w-[140px]">
-          <label className="block text-xs font-medium text-ink/60 mb-1">Order number</label>
-          <input
-            required
-            value={orderNumber}
-            onChange={(e) => setOrderNumber(e.target.value)}
-            placeholder={placeholder}
-            className="w-full rounded-lg border border-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
-        {extraField && (
+      {currentProfile.role === 'cs' && (
+        <form onSubmit={handleCreate} className="bg-card border border-line rounded-xl p-4 mb-6 flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-xs font-medium text-ink/60 mb-1">{extraField.label}</label>
+            <label className="block text-xs font-medium text-ink/60 mb-1">Order number</label>
             <input
-              value={extraValue}
-              onChange={(e) => setExtraValue(e.target.value)}
-              placeholder={extraField.placeholder}
-              className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              required
+              value={orderNumber}
+              onChange={(e) => setOrderNumber(e.target.value)}
+              placeholder={placeholder}
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
-        )}
-        {showAmount && (
-          <div className="flex-1 min-w-[120px]">
-            <label className="block text-xs font-medium text-ink/60 mb-1">Amount</label>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={amountValue}
-              onChange={(e) => setAmountValue(e.target.value)}
-              placeholder="e.g. 250"
-              className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-        )}
-        <button
-          type="submit"
-          disabled={creating}
-          className="bg-primary text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-primary-dark disabled:opacity-60"
-        >
-          {creating ? 'Adding…' : '+ Add'}
-        </button>
-      </form>
+          {extraField && (
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-xs font-medium text-ink/60 mb-1">{extraField.label}</label>
+              <input
+                value={extraValue}
+                onChange={(e) => setExtraValue(e.target.value)}
+                placeholder={extraField.placeholder}
+                className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          )}
+          {showAmount && (
+            <div className="flex-1 min-w-[120px]">
+              <label className="block text-xs font-medium text-ink/60 mb-1">Amount</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={amountValue}
+                onChange={(e) => setAmountValue(e.target.value)}
+                placeholder="e.g. 250"
+                className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={creating}
+            className="bg-primary text-white text-sm font-medium rounded-lg px-4 py-2 hover:bg-primary-dark disabled:opacity-60"
+          >
+            {creating ? 'Adding…' : '+ Add'}
+          </button>
+        </form>
+      )}
 
       {items.length === 0 ? (
         <div className="text-center py-16 text-ink/50 text-sm border border-dashed border-line rounded-xl">
@@ -203,47 +227,58 @@ export default function SimpleTicketBrowser({
         </div>
       ) : (
         <div className="bg-card border border-line rounded-xl overflow-hidden">
-          {items.map((item) => (
-            <div key={item.id} className="border-b border-line last:border-0">
-              <button
-                onClick={() => toggleExpand(item.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-ink/[0.02] transition-colors text-left"
-              >
-                <input
-                  type="checkbox"
-                  checked={!!item[doneField]}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    toggleDone(item.id, item[doneField]);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-4 w-4 shrink-0"
-                />
-                <span className="font-mono text-sm text-ink shrink-0">{item.order_number}</span>
-                {extraField && item[extraField.key] && (
-                  <span className="text-sm text-ink/60 shrink-0">{item[extraField.key]}</span>
-                )}
-                {showAmount && item.amount != null && (
-                  <span className="text-sm text-ink/60 font-mono shrink-0">{item.amount}</span>
-                )}
-                <span className={`text-xs shrink-0 ${item[doneField] ? 'text-status-processed' : 'text-status-pending'}`}>
-                  {item[doneField] ? doneLabel : 'Pending'}
-                </span>
-                <span className="text-xs text-ink/40 ml-auto shrink-0">
-                  {new Date(item.created_at).toLocaleDateString()}
-                </span>
-              </button>
+          {items.map((item) => {
+            const actual = !!item[doneField];
+            const isArmed = item.id in pending;
+            const displayedChecked = isArmed ? pending[item.id] : actual;
 
-              {expanded === item.id && (
-                <div className="px-4 pb-4">
-                  <div className="space-y-2 mb-3">
-                    {(comments[item.id] ?? []).length === 0 ? (
-                      <p className="text-sm text-ink/50">No comments yet.</p>
-                    ) : (
-                      (comments[item.id] ?? []).map((c) => (
-                        <div key={c.id} className="text-sm">
-                          <p className="text-ink">{c.body}</p>
-                          <p className="text-xs text-ink/40 mt-0.5">
+            return (
+              <div key={item.id} className="border-b border-line last:border-0">
+                <div className="w-full flex items-center gap-3 px-4 py-3 hover:bg-ink/[0.02] transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={displayedChecked}
+                    onChange={() => handleCheckboxClick(item.id, actual)}
+                    className="h-4 w-4 shrink-0"
+                  />
+                  <button
+                    onClick={() => toggleExpand(item.id)}
+                    className="flex items-center gap-3 flex-1 text-left min-w-0"
+                  >
+                    <span className="font-mono text-sm text-ink shrink-0">{item.order_number}</span>
+                    {extraField && item[extraField.key] && (
+                      <span className="text-sm text-ink/60 shrink-0">{item[extraField.key]}</span>
+                    )}
+                    {showAmount && item.amount != null && (
+                      <span className="text-sm text-ink/60 font-mono shrink-0">{item.amount}</span>
+                    )}
+                    <span className={`text-xs shrink-0 ${actual ? 'text-status-processed' : 'text-status-pending'}`}>
+                      {actual ? doneLabel : 'Pending'}
+                    </span>
+                    <span className="text-xs text-ink/40 ml-auto shrink-0">
+                      {new Date(item.created_at).toLocaleDateString()}
+                    </span>
+                  </button>
+                  {isArmed && (
+                    <button
+                      onClick={() => toggleDone(item.id, actual)}
+                      className="shrink-0 text-xs font-medium bg-primary text-white rounded-lg px-3 py-1.5 hover:bg-primary-dark"
+                    >
+                      Confirm {pending[item.id] ? doneLabel : 'Pending'}
+                    </button>
+                  )}
+                </div>
+
+                {expanded === item.id && (
+                  <div className="px-4 pb-4">
+                    <div className="space-y-2 mb-3">
+                      {(comments[item.id] ?? []).length === 0 ? (
+                        <p className="text-sm text-ink/50">No comments yet.</p>
+                      ) : (
+                        (comments[item.id] ?? []).map((c) => (
+                          <div key={c.id} className="text-sm">
+                            <p className="text-ink">{c.body}</p>
+                            <p className="text-xs text-ink/40 mt-0.5">
                             {profilesById[c.author_id]?.full_name ?? 'Unknown'} ·{' '}
                             {new Date(c.created_at).toLocaleString()}
                           </p>
@@ -268,8 +303,9 @@ export default function SimpleTicketBrowser({
                   </div>
                 </div>
               )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

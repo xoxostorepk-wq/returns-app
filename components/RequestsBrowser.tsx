@@ -122,6 +122,17 @@ export default function RequestsBrowser({
         )}
       </div>
 
+      {currentProfile.role === 'cs' && (
+        <Link
+          href={`/create?store=${storeId}`}
+          aria-label="New Request"
+          title="New Request"
+          className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark transition-colors flex items-center justify-center text-2xl font-light"
+        >
+          +
+        </Link>
+      )}
+
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
         {STATUS_TABS.map((tab) => (
           <button
@@ -174,19 +185,18 @@ export default function RequestsBrowser({
         </div>
       ) : (
         <div className="bg-card border border-line rounded-xl overflow-hidden">
-          <div className="hidden sm:grid grid-cols-[24px_1fr_1fr_1.5fr_90px_1fr_100px] gap-3 px-4 py-2.5 text-xs font-semibold text-ink/50 border-b border-line uppercase tracking-wide">
+          <div className="hidden sm:grid grid-cols-[24px_1fr_1fr_1.5fr_1fr_100px] gap-3 px-4 py-2.5 text-xs font-semibold text-ink/50 border-b border-line uppercase tracking-wide">
             <span />
             <span>Order #</span>
             <span>Type</span>
             <span>Item</span>
-            <span>Amount</span>
             <span>Created</span>
             <span>Status</span>
           </div>
           {filtered.map((r) => (
             <div
               key={r.id}
-              className="grid grid-cols-1 sm:grid-cols-[24px_1fr_1fr_1.5fr_90px_1fr_100px] gap-1 sm:gap-3 px-4 py-3 border-b border-line last:border-0 items-center hover:bg-ink/[0.02] transition-colors"
+              className="grid grid-cols-1 sm:grid-cols-[24px_1fr_1fr_1.5fr_1fr_100px] gap-1 sm:gap-3 px-4 py-3 border-b border-line last:border-0 items-center hover:bg-ink/[0.02] transition-colors"
             >
               <input
                 type="checkbox"
@@ -201,9 +211,6 @@ export default function RequestsBrowser({
                   {r.request_type === 'other' ? r.request_type_other : REQUEST_TYPE_LABELS[r.request_type]}
                 </span>
                 <span className="text-sm text-ink/70 truncate">{r.item_to_send}</span>
-                <span className="text-sm text-ink/70 font-mono">
-                  {r.amount != null ? r.amount : '—'}
-                </span>
                 <span className="text-sm sm:text-xs text-ink/50">
                   {new Date(r.created_at).toLocaleDateString()}{' '}
                   {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

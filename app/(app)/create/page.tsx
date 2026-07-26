@@ -88,7 +88,6 @@ export default function CreateRequestPage() {
   const [otherType, setOtherType] = useState('');
   const [itemToSend, setItemToSend] = useState('');
   const [paymentInstructions, setPaymentInstructions] = useState('');
-  const [amount, setAmount] = useState('');
   const [comment, setComment] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -138,7 +137,6 @@ export default function CreateRequestPage() {
         request_type_other: requestType === 'other' ? otherType.trim() : null,
         item_to_send: itemToSend.trim(),
         payment_instructions: paymentInstructions.trim(),
-        amount: amount.trim() ? Number(amount) : null,
         created_by: user.id,
       })
       .select()
@@ -278,30 +276,31 @@ export default function CreateRequestPage() {
           />
         </Field>
 
-        <Field label="Amount (optional)">
-          <input
-            type="number"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="e.g. 250"
-            className="input"
-          />
-        </Field>
-
         <Field label="Upload screenshots">
-          <label className="flex items-center justify-center gap-2 border-2 border-dashed border-line rounded-lg py-6 text-sm text-ink/60 cursor-pointer hover:border-primary/40 hover:text-primary transition-colors">
-            <CameraIcon />
-            Tap to add photos
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              capture="environment"
-              onChange={(e) => handleFiles(e.target.files)}
-              className="hidden"
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-line rounded-lg py-5 text-sm text-ink/60 cursor-pointer hover:border-primary/40 hover:text-primary transition-colors">
+              <CameraIcon />
+              Take Photo
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handleFiles(e.target.files)}
+                className="hidden"
+              />
+            </label>
+            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-line rounded-lg py-5 text-sm text-ink/60 cursor-pointer hover:border-primary/40 hover:text-primary transition-colors">
+              <LibraryIcon />
+              Choose from Library
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleFiles(e.target.files)}
+                className="hidden"
+              />
+            </label>
+          </div>
 
           {images.length > 0 && (
             <div className="grid grid-cols-4 gap-2 mt-3">
@@ -384,6 +383,16 @@ function CameraIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+function LibraryIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
