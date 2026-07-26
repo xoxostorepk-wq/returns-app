@@ -49,6 +49,7 @@ export default async function ReturnedByCourierPage({
         doneField="resent"
         doneLabel="Resent"
         extraField={{ key: 'courier', label: 'Courier', placeholder: 'e.g. TCS, Leopard' }}
+        showAmount
         placeholder="#153"
       />
     </div>

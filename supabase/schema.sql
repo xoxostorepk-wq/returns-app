@@ -42,6 +42,7 @@ create table requests (
   request_type_other text, -- filled only when request_type = 'other'
   item_to_send text not null,
   payment_instructions text not null default '',
+  amount numeric,
   status request_status not null default 'pending',
   created_by uuid not null references profiles(id),
   created_at timestamptz not null default now(),
@@ -111,6 +112,7 @@ create table order_confirmations (
   store_id uuid not null references stores(id),
   order_number text not null,
   shopify_created boolean not null default false,
+  amount numeric,
   created_by uuid not null references profiles(id),
   created_at timestamptz not null default now()
 );
@@ -135,6 +137,7 @@ create table returned_by_courier (
   order_number text not null,
   courier text not null default '',
   resent boolean not null default false,
+  amount numeric,
   created_by uuid not null references profiles(id),
   created_at timestamptz not null default now()
 );

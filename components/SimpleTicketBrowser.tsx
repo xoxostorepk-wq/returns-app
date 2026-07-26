@@ -31,6 +31,7 @@ export default function SimpleTicketBrowser({
   doneField,
   doneLabel,
   extraField,
+  showAmount,
   placeholder,
 }: {
   storeId: string;
@@ -43,6 +44,7 @@ export default function SimpleTicketBrowser({
   doneField: string;
   doneLabel: string;
   extraField?: { key: string; label: string; placeholder: string };
+  showAmount?: boolean;
   placeholder: string;
 }) {
   const supabase = createClient();
@@ -54,6 +56,7 @@ export default function SimpleTicketBrowser({
 
   const [orderNumber, setOrderNumber] = useState('');
   const [extraValue, setExtraValue] = useState('');
+  const [amountValue, setAmountValue] = useState('');
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -98,11 +101,13 @@ export default function SimpleTicketBrowser({
       created_by: user.id,
     };
     if (extraField) row[extraField.key] = extraValue.trim();
+    if (showAmount) row.amount = amountValue.trim() ? Number(amountValue) : null;
 
     await supabase.from(table).insert(row);
 
     setOrderNumber('');
     setExtraValue('');
+    setAmountValue('');
     setCreating(false);
   }
 
@@ -170,6 +175,19 @@ export default function SimpleTicketBrowser({
             />
           </div>
         )}
+        {showAmount && (
+          <div className="flex-1 min-w-[120px]">
+            <label className="block text-xs font-medium text-ink/60 mb-1">Amount</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={amountValue}
+              onChange={(e) => setAmountValue(e.target.value)}
+              placeholder="e.g. 250"
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+        )}
         <button
           type="submit"
           disabled={creating}
@@ -204,6 +222,9 @@ export default function SimpleTicketBrowser({
                 <span className="font-mono text-sm text-ink shrink-0">{item.order_number}</span>
                 {extraField && item[extraField.key] && (
                   <span className="text-sm text-ink/60 shrink-0">{item[extraField.key]}</span>
+                )}
+                {showAmount && item.amount != null && (
+                  <span className="text-sm text-ink/60 font-mono shrink-0">{item.amount}</span>
                 )}
                 <span className={`text-xs shrink-0 ${item[doneField] ? 'text-status-processed' : 'text-status-pending'}`}>
                   {item[doneField] ? doneLabel : 'Pending'}

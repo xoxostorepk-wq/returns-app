@@ -23,6 +23,7 @@ const EDITABLE_FIELDS: { key: keyof RequestRecord; label: string }[] = [
   { key: 'order_number', label: 'Order number' },
   { key: 'item_to_send', label: 'Item to send' },
   { key: 'payment_instructions', label: 'Payment instructions' },
+  { key: 'amount', label: 'Amount' },
 ];
 
 export default function RequestDetail({
@@ -48,6 +49,7 @@ export default function RequestDetail({
     order_number: request.order_number,
     item_to_send: request.item_to_send,
     payment_instructions: request.payment_instructions,
+    amount: request.amount != null ? String(request.amount) : '',
     request_type: request.request_type,
     request_type_other: request.request_type_other ?? '',
   });
@@ -86,6 +88,7 @@ export default function RequestDetail({
         order_number: form.order_number,
         item_to_send: form.item_to_send,
         payment_instructions: form.payment_instructions,
+        amount: form.amount.trim() ? Number(form.amount) : null,
         request_type: form.request_type,
         request_type_other: form.request_type === 'other' ? form.request_type_other : null,
       })
@@ -266,7 +269,7 @@ export default function RequestDetail({
           {editing ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-ink/60 mb-1">Order number</label>
+                <label className="block text-sm font-medium text-ink/60 mb-1">Order number</label>
                 <input
                   value={form.order_number}
                   onChange={(e) => setForm((f) => ({ ...f, order_number: e.target.value }))}
@@ -274,7 +277,7 @@ export default function RequestDetail({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-ink/60 mb-1">Request type</label>
+                <label className="block text-sm font-medium text-ink/60 mb-1">Request type</label>
                 <div className="grid grid-cols-2 gap-2">
                   {REQUEST_TYPES.map((t) => (
                     <button
@@ -292,7 +295,7 @@ export default function RequestDetail({
               </div>
               {form.request_type === 'other' && (
                 <div>
-                  <label className="block text-xs font-medium text-ink/60 mb-1">Specify type</label>
+                  <label className="block text-sm font-medium text-ink/60 mb-1">Specify type</label>
                   <input
                     value={form.request_type_other}
                     onChange={(e) => setForm((f) => ({ ...f, request_type_other: e.target.value }))}
@@ -301,7 +304,7 @@ export default function RequestDetail({
                 </div>
               )}
               <div>
-                <label className="block text-xs font-medium text-ink/60 mb-1">Item to send</label>
+                <label className="block text-sm font-medium text-ink/60 mb-1">Item to send</label>
                 <textarea
                   value={form.item_to_send}
                   onChange={(e) => setForm((f) => ({ ...f, item_to_send: e.target.value }))}
@@ -310,12 +313,22 @@ export default function RequestDetail({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-ink/60 mb-1">Payment instructions</label>
+                <label className="block text-sm font-medium text-ink/60 mb-1">Payment instructions</label>
                 <textarea
                   value={form.payment_instructions}
                   onChange={(e) => setForm((f) => ({ ...f, payment_instructions: e.target.value }))}
                   rows={2}
                   className="input resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-ink/60 mb-1">Amount</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.amount}
+                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                  className="input"
                 />
               </div>
               <div className="flex gap-2">
@@ -339,6 +352,7 @@ export default function RequestDetail({
             <dl className="space-y-3 text-sm">
               <Row label="Item to send" value={request.item_to_send} />
               <Row label="Payment instructions" value={request.payment_instructions || '—'} />
+              <Row label="Amount" value={request.amount != null ? String(request.amount) : '—'} />
             </dl>
           )}
         </div>
@@ -425,7 +439,7 @@ export default function RequestDetail({
             {request.status === 'packed' && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-ink/60 mb-1">Tracking number</label>
+                  <label className="block text-sm font-medium text-ink/60 mb-1">Tracking number</label>
                   <input
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
@@ -510,8 +524,8 @@ export default function RequestDetail({
           width: 100%;
           border-radius: 0.5rem;
           border: 1px solid #e4e4e1;
-          padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
+          padding: 0.625rem 0.75rem;
+          font-size: 1rem;
           background: white;
         }
         .input:focus {

@@ -48,6 +48,7 @@ export default async function ConfirmationsPage({
         parentIdField="order_confirmation_id"
         doneField="shopify_created"
         doneLabel="Order created in Shopify"
+        showAmount
         placeholder="#1535"
       />
     </div>

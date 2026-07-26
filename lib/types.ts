@@ -23,6 +23,7 @@ export interface RequestRecord {
   request_type_other: string | null;
   item_to_send: string;
   payment_instructions: string;
+  amount: number | null;
   status: RequestStatus;
   created_by: string;
   created_at: string;
@@ -77,6 +78,7 @@ export interface OrderConfirmation {
   store_id: string;
   order_number: string;
   shopify_created: boolean;
+  amount: number | null;
   created_by: string;
   created_at: string;
 }
@@ -95,6 +97,7 @@ export interface ReturnedByCourier {
   order_number: string;
   courier: string;
   resent: boolean;
+  amount: number | null;
   created_by: string;
   created_at: string;
 }

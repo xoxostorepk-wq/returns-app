@@ -56,7 +56,7 @@ export default function AppShell({
         </div>
 
         <Suspense fallback={null}>
-          <nav className="sm:hidden flex items-center gap-1 px-4 pb-2 text-sm font-medium overflow-x-auto">
+          <nav className="sm:hidden flex items-center gap-1 px-4 pb-2 text-base font-medium overflow-x-auto">
             <NavLink href="/requests" label="Requests" />
             {profile.role === 'cs' && <NavLink href="/create" label="New Request" />}
             <NavLink href="/confirmations" label="Confirmations" />
@@ -123,7 +123,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={destination}
-      className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+      className={`px-3 py-2.5 sm:py-1.5 rounded-lg whitespace-nowrap transition-colors ${
         active ? 'bg-primary/10 text-primary' : 'text-ink/60 hover:text-ink hover:bg-ink/5'
       }`}
     >

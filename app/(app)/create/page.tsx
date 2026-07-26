@@ -26,14 +26,20 @@ export default function CreateRequestPage() {
     async function resolveStore() {
       const urlStoreId = searchParams.get('store');
 
+      // Try the store from the URL, but only trust it if that store still
+      // actually exists — a deleted store's ID lingering in a link or in
+      // last_store_id used to get silently used anyway, which is exactly
+      // what caused requests to fail to save with no clear reason.
       if (urlStoreId) {
-        setStoreId(urlStoreId);
-        const { data } = await supabase.from('stores').select('name').eq('id', urlStoreId).single();
-        if (!cancelled && data) setStoreName(data.name);
-        return;
+        const { data } = await supabase.from('stores').select('id, name').eq('id', urlStoreId).single();
+        if (!cancelled && data) {
+          setStoreId(data.id);
+          setStoreName(data.name);
+          return;
+        }
       }
 
-      // No store in the URL — look up the signed-in user's last-used store.
+      // No usable store in the URL — try the signed-in user's last-used store.
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -45,14 +51,28 @@ export default function CreateRequestPage() {
         .eq('id', user.id)
         .single();
 
-      if (!cancelled && profile?.last_store_id) {
-        setStoreId(profile.last_store_id);
+      if (profile?.last_store_id) {
         const { data: store } = await supabase
           .from('stores')
-          .select('name')
+          .select('id, name')
           .eq('id', profile.last_store_id)
           .single();
-        if (!cancelled && store) setStoreName(store.name);
+        if (!cancelled && store) {
+          setStoreId(store.id);
+          setStoreName(store.name);
+          return;
+        }
+      }
+
+      // Last resort: last_store_id pointed at a store that no longer exists
+      // (e.g. it was deleted). Just use whichever store is actually there —
+      // this is exactly right when there's only one store to begin with.
+      const { data: anyStore } = await supabase.from('stores').select('id, name').limit(1).single();
+      if (!cancelled && anyStore) {
+        setStoreId(anyStore.id);
+        setStoreName(anyStore.name);
+        // Also fix the user's saved default so this doesn't keep happening.
+        await supabase.from('profiles').update({ last_store_id: anyStore.id }).eq('id', user.id);
       }
     }
 
@@ -68,6 +88,7 @@ export default function CreateRequestPage() {
   const [otherType, setOtherType] = useState('');
   const [itemToSend, setItemToSend] = useState('');
   const [paymentInstructions, setPaymentInstructions] = useState('');
+  const [amount, setAmount] = useState('');
   const [comment, setComment] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -117,6 +138,7 @@ export default function CreateRequestPage() {
         request_type_other: requestType === 'other' ? otherType.trim() : null,
         item_to_send: itemToSend.trim(),
         payment_instructions: paymentInstructions.trim(),
+        amount: amount.trim() ? Number(amount) : null,
         created_by: user.id,
       })
       .select()
@@ -183,12 +205,12 @@ export default function CreateRequestPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h1 className="text-xl font-semibold text-ink mb-1">New request</h1>
-      <p className="text-sm text-ink/60 mb-3">
+      <h1 className="text-2xl font-semibold text-ink mb-1">New request</h1>
+      <p className="text-base text-ink/60 mb-3">
         Fill this in from what the customer sent — the Order Taker will pick it up from here.
       </p>
       {storeName && (
-        <p className="text-sm font-medium text-primary bg-primary/10 rounded-lg px-3 py-2 mb-6 inline-block">
+        <p className="text-base font-medium text-primary bg-primary/10 rounded-lg px-3 py-2 mb-6 inline-block">
           Creating for: {storeName}
         </p>
       )}
@@ -211,7 +233,7 @@ export default function CreateRequestPage() {
                 type="button"
                 key={type}
                 onClick={() => setRequestType(type)}
-                className={`py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+                className={`py-3.5 rounded-lg text-base font-medium border transition-colors ${
                   requestType === type
                     ? 'bg-primary text-white border-primary'
                     : 'bg-card border-line text-ink/70 hover:border-ink/30'
@@ -253,6 +275,17 @@ export default function CreateRequestPage() {
             placeholder="e.g. Collect Rs.250 / No Charges / Exchange Free of Cost"
             rows={2}
             className="input resize-none"
+          />
+        </Field>
+
+        <Field label="Amount (optional)">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="e.g. 250"
+            className="input"
           />
         </Field>
 
@@ -312,7 +345,7 @@ export default function CreateRequestPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-primary hover:bg-primary-dark text-white font-medium rounded-lg py-3 transition-colors disabled:opacity-60"
+            className="w-full bg-primary hover:bg-primary-dark text-white text-base font-medium rounded-lg py-3.5 transition-colors disabled:opacity-60"
           >
             {submitting ? 'Saving…' : 'Create request'}
           </button>
@@ -325,14 +358,14 @@ export default function CreateRequestPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-ink mb-1.5">{label}</label>
+      <label className="block text-base font-medium text-ink mb-1.5">{label}</label>
       {children}
       <style jsx global>{`
         .input {
           width: 100%;
           border-radius: 0.5rem;
           border: 1px solid #e4e4e1;
-          padding: 0.625rem 0.75rem;
+          padding: 0.75rem 0.875rem;
           font-size: 1rem;
           background: white;
         }
