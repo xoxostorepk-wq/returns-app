@@ -61,6 +61,7 @@ export default function SimpleTicketBrowser({
   const [notesValue, setNotesValue] = useState('');
   const [amountValue, setAmountValue] = useState('');
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // Editing an existing item's notes after creation.
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
@@ -94,6 +95,7 @@ export default function SimpleTicketBrowser({
     e.preventDefault();
     if (!orderNumber.trim()) return;
     setCreating(true);
+    setCreateError(null);
 
     const {
       data: { user },
@@ -103,16 +105,46 @@ export default function SimpleTicketBrowser({
       return;
     }
 
+    const trimmedOrderNumber = orderNumber.trim();
+
+    // Same order number can exist once per tab, but not twice within this
+    // same tab (two agents entering the same order independently, etc.).
+    const { data: existing } = await supabase
+      .from(table)
+      .select('id')
+      .eq('store_id', storeId)
+      .ilike('order_number', trimmedOrderNumber)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      setCreateError('This order number already exists in this tab.');
+      setCreating(false);
+      return;
+    }
+
     const row: Record<string, any> = {
       store_id: storeId,
-      order_number: orderNumber.trim(),
+      order_number: trimmedOrderNumber,
       created_by: user.id,
     };
     if (extraField) row[extraField.key] = extraValue.trim();
     if (notesField) row[notesField.key] = notesValue.trim() || null;
     if (showAmount) row.amount = amountValue.trim() ? Number(amountValue) : null;
 
-    await supabase.from(table).insert(row);
+    const { error: insertError } = await supabase.from(table).insert(row);
+
+    if (insertError) {
+      // Backstop for the rare case of two people submitting the same
+      // order number at the exact same moment (the DB itself also
+      // enforces this — see supabase/fix_fulfilled_lock_and_duplicate_check.sql).
+      setCreateError(
+        insertError.code === '23505'
+          ? 'This order number already exists in this tab.'
+          : 'Could not save. Please try again.'
+      );
+      setCreating(false);
+      return;
+    }
 
     setOrderNumber('');
     setExtraValue('');
@@ -222,7 +254,10 @@ export default function SimpleTicketBrowser({
             <input
               required
               value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
+              onChange={(e) => {
+                setOrderNumber(e.target.value);
+                setCreateError(null);
+              }}
               placeholder={placeholder}
               className="w-full rounded-lg border border-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
@@ -269,6 +304,7 @@ export default function SimpleTicketBrowser({
           >
             {creating ? 'Adding…' : '+ Add'}
           </button>
+          {createError && <p className="text-sm text-red-600 basis-full">{createError}</p>}
         </form>
       )}
 
@@ -278,6 +314,17 @@ export default function SimpleTicketBrowser({
         </div>
       ) : (
         <div className="bg-card border border-line rounded-xl overflow-hidden">
+          <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-ink/50 border-b border-line uppercase tracking-wide">
+            <span className="w-4 shrink-0" />
+            <div className="grid grid-cols-[1fr_90px_120px_1fr_1fr_100px] gap-3 flex-1">
+              <span>Order #</span>
+              <span>Amount</span>
+              <span>Status</span>
+              <span>{extraField?.label ?? 'Courier'}</span>
+              <span>Created By</span>
+              <span>Created</span>
+            </div>
+          </div>
           {items.map((item) => {
             const actual = !!item[doneField];
             const isArmed = item.id in pending;
@@ -304,20 +351,25 @@ export default function SimpleTicketBrowser({
                   {locked && actual && <LockIcon />}
                   <button
                     onClick={() => toggleExpand(item.id)}
-                    className="flex items-center gap-3 flex-1 text-left min-w-0"
+                    className="grid grid-cols-2 sm:grid-cols-[1fr_90px_120px_1fr_1fr_100px] gap-1 sm:gap-3 flex-1 text-left min-w-0 items-center"
                   >
-                    <span className="font-mono text-sm text-ink shrink-0">{item.order_number}</span>
-                    {extraField && item[extraField.key] && (
-                      <span className="text-sm text-ink/60 shrink-0">{item[extraField.key]}</span>
-                    )}
-                    {showAmount && item.amount != null && (
-                      <span className="text-sm text-ink/60 font-mono shrink-0">{item.amount}</span>
-                    )}
-                    {notesField && item[notesField.key] && <NoteIcon />}
+                    <span className="font-mono text-sm text-ink shrink-0 flex items-center gap-1.5 col-span-2 sm:col-span-1">
+                      {item.order_number}
+                      {notesField && item[notesField.key] && <NoteIcon />}
+                    </span>
+                    <span className="text-sm text-ink/70 font-mono">
+                      {showAmount && item.amount != null ? item.amount : '—'}
+                    </span>
                     <span className={`text-xs shrink-0 ${actual ? 'text-status-processed' : 'text-status-pending'}`}>
                       {actual ? doneLabel : 'Pending'}
                     </span>
-                    <span className="text-xs text-ink/40 ml-auto shrink-0">
+                    <span className="text-sm text-ink/70 truncate">
+                      {extraField && item[extraField.key] ? item[extraField.key] : '—'}
+                    </span>
+                    <span className="text-sm text-ink/70 truncate">
+                      {profilesById[item.created_by]?.full_name ?? '—'}
+                    </span>
+                    <span className="text-sm sm:text-xs text-ink/50">
                       {new Date(item.created_at).toLocaleDateString()}
                     </span>
                   </button>

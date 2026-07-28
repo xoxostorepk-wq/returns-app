@@ -170,6 +170,38 @@ Run `supabase/add_courier_and_notes_fields.sql` in the SQL Editor before
 using this — it just adds the two new (nullable) columns, nothing
 destructive.
 
+## What's new — fulfilled-lock fix, duplicate-order check, column view
+
+- **Bug fix:** the fulfilled checkbox in Confirmations/Returned by
+  Courier was reverting to Pending after a refresh. Root cause: the
+  previous permission rule was missing an explicit "what's allowed to be
+  saved" clause, so Postgres reused the "not yet fulfilled" rule to check
+  the save itself — which meant the very act of marking something
+  fulfilled always got silently rejected. Fixed in
+  `supabase/fix_fulfilled_lock_and_duplicate_check.sql`.
+- **Duplicate order number check**, applied separately to each of the 3
+  tabs (Requests, Confirmations, Returned by Courier): the same order
+  number can't be entered twice within the same tab, but it can appear
+  once in each of the 3 tabs (e.g. once in Requests and once in
+  Confirmations is fine). Trying to add a duplicate shows: "This order
+  number already exists in this tab." Matching ignores case/spacing.
+  Enforced both in the app (instant, friendly message) and at the
+  database level (backstop for the rare case of two people submitting
+  the same order number at the same moment).
+- **Confirmations & Returned by Courier now show a full column table**
+  instead of a compact single-line list: **Order # → Amount → Status →
+  Courier → Created By → Created**, so anyone (not just Order Taker) can
+  scan the list at a glance and see who created each entry. Click a row
+  to still see/add comments and notes underneath.
+
+Run `supabase/fix_fulfilled_lock_and_duplicate_check.sql` in the SQL
+Editor — it fixes the two update policies and adds the 3 uniqueness
+rules. **Note:** if you already have duplicate order numbers sitting in
+any of the 3 tabs from before, this migration's last step (creating the
+uniqueness rule) will fail with an error naming the duplicate — if that
+happens, tell me the order number it mentions and I'll help you sort out
+which entry to keep, then you can re-run it.
+
 ## Deliberately left out of Version 1 (for later)
 
 - Shopify integration (all data is entered manually for now)

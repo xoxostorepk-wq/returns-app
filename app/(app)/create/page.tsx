@@ -127,12 +127,29 @@ export default function CreateRequestPage() {
       return;
     }
 
+    const trimmedOrderNumber = orderNumber.trim();
+
+    // Same order number can exist once in Requests, once in Confirmations,
+    // and once in Returned by Courier — but not twice within Requests itself.
+    const { data: existing } = await supabase
+      .from('requests')
+      .select('id')
+      .eq('store_id', storeId)
+      .ilike('order_number', trimmedOrderNumber)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      setError('This order number already exists in this tab.');
+      setSubmitting(false);
+      return;
+    }
+
     // 1. Create the request row
     const { data: request, error: insertError } = await supabase
       .from('requests')
       .insert({
         store_id: storeId,
-        order_number: orderNumber.trim(),
+        order_number: trimmedOrderNumber,
         request_type: requestType,
         request_type_other: requestType === 'other' ? otherType.trim() : null,
         item_to_send: itemToSend.trim(),
@@ -143,7 +160,13 @@ export default function CreateRequestPage() {
       .single();
 
     if (insertError || !request) {
-      setError('Could not save the request. Please try again.');
+      // Backstop for two people submitting the same order number at once
+      // — the DB itself also enforces this uniqueness rule.
+      setError(
+        insertError?.code === '23505'
+          ? 'This order number already exists in this tab.'
+          : 'Could not save the request. Please try again.'
+      );
       setSubmitting(false);
       return;
     }
