@@ -316,11 +316,12 @@ export default function SimpleTicketBrowser({
         <div className="bg-card border border-line rounded-xl overflow-hidden">
           <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-ink/50 border-b border-line uppercase tracking-wide">
             <span className="w-4 shrink-0" />
-            <div className="grid grid-cols-[1fr_90px_120px_1fr_1fr_100px] gap-3 flex-1">
+            <div className="grid grid-cols-[1fr_90px_120px_1fr_1fr_1fr_100px] gap-3 flex-1">
               <span>Order #</span>
               <span>Amount</span>
               <span>Status</span>
               <span>{extraField?.label ?? 'Courier'}</span>
+              <span>Notes</span>
               <span>Created By</span>
               <span>Created</span>
             </div>
@@ -351,7 +352,7 @@ export default function SimpleTicketBrowser({
                   {locked && actual && <LockIcon />}
                   <button
                     onClick={() => toggleExpand(item.id)}
-                    className="grid grid-cols-2 sm:grid-cols-[1fr_90px_120px_1fr_1fr_100px] gap-1 sm:gap-3 flex-1 text-left min-w-0 items-center"
+                    className="grid grid-cols-2 sm:grid-cols-[1fr_90px_120px_1fr_1fr_1fr_100px] gap-1 sm:gap-3 flex-1 text-left min-w-0 items-center"
                   >
                     <span className="font-mono text-sm text-ink shrink-0 flex items-center gap-1.5 col-span-2 sm:col-span-1">
                       {item.order_number}
@@ -365,6 +366,9 @@ export default function SimpleTicketBrowser({
                     </span>
                     <span className="text-sm text-ink/70 truncate">
                       {extraField && item[extraField.key] ? item[extraField.key] : '—'}
+                    </span>
+                    <span className="text-sm text-red-600 truncate">
+                      {notesField && item[notesField.key] ? item[notesField.key] : '—'}
                     </span>
                     <span className="text-sm text-ink/70 truncate">
                       {profilesById[item.created_by]?.full_name ?? '—'}
